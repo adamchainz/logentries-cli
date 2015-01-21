@@ -6,6 +6,7 @@ import argparse
 import calendar
 import datetime as dt
 import os
+import re
 import sys
 
 import parsedatetime
@@ -42,7 +43,8 @@ parser.add_argument(
     '--start',
     type=str,
     default=None,
-    help="The start time for the search, defaults to 20 minutes ago. If it is a number, this many minutes will be taken off the end time."
+    help="The start time for the search, defaults to 20 minutes ago. "
+         "If it is a number, this many minutes will be taken off the end time."
 )
 parser.add_argument(
     '-e',
@@ -52,10 +54,33 @@ parser.add_argument(
     help="The end time for the search, defaults to now."
 )
 
+parser.add_argument(
+    '-k',
+    '--account-key',
+    type=str,
+    default=None,
+    help="Your account key (from settings). If not set on the commandline it "
+         "will be set from the environment variable LOGENTRIES_ACCOUNT_KEY"
+)
+
 URL_TEMPLATE = 'https://pull.logentries.com/{account_key}/hosts/{host}/{log}/'
+UUID_RE = r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 
 
-def main(host, log, start, end, the_filter):
+def main(account_key, host, log, start, end, the_filter):
+    if account_key is None:
+        account_key = os.getenv('LOGENTRIES_ACCOUNT_KEY')
+        if account_key is None:
+            print("Please set --account-key or the environment variable "
+                  "LOGENTRIES_ACCOUNT_KEY", file=sys.stderr)
+            return 2
+
+    account_key = str(account_key).lower()
+
+    if not re.match(UUID_RE, account_key):
+        print("Your account key should be a UUID", file=sys.stderr)
+        return 2
+
     url = URL_TEMPLATE.format(
         account_key=os.environ['LOGENTRIES_ACCOUNT_KEY'],
         host=host,
@@ -83,14 +108,16 @@ def main(host, log, start, end, the_filter):
     if the_filter is not None:
         params['filter'] = the_filter
 
-    r = requests.get(url, params=params)
+    r = requests.get(url, params=params, stream=True)
 
     if r.status_code != 200:
         print("Cannot retrieve log, got error message:", file=sys.stderr)
         print(r.content, file=sys.stderr)
         return 1
 
-    print(r.content)
+    for line in r.iter_lines():
+        if line:
+            print(line)
 
     return 0
 
