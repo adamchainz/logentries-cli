@@ -5,6 +5,7 @@ from __future__ import print_function, unicode_literals
 import argparse
 import calendar
 import datetime as dt
+import errno
 import os
 import re
 import sys
@@ -115,9 +116,17 @@ def main(account_key, host, log, start, end, the_filter):
         print(r.content, file=sys.stderr)
         return 1
 
-    for line in r.iter_lines():
-        if line:
-            print(line)
+    try:
+        for line in r.iter_lines():
+            # If you search an empty time period, the response is a few blank
+            # lines, so filter out those lines
+            if line:
+                print(line)
+    except IOError as e:
+        if e.errno == errno.EPIPE:
+            return 3
+        else:
+            raise
 
     return 0
 
