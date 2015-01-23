@@ -14,11 +14,11 @@ def read(*filenames, **kwargs):
             buf.append(f.read())
     return sep.join(buf)
 
-long_description = read('README.md')
+long_description = read('README.rst')
 
 setup(
     name='logentries-cli',
-    version='1.0',
+    version='1.1',
     description='Get your logs from Logentries on the comandline',
     author='Adam Johnson',
     author_email='me@adamj.eu',
