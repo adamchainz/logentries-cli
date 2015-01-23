@@ -17,6 +17,14 @@ import requests
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 
+# Make SSL more secure
+try:
+    from requests.packages.urllib3.contrib import pyopenssl
+    pyopenssl.inject_into_urllib3()
+except ImportError:
+    pass
+
+
 parser = argparse.ArgumentParser(
     prog="logentries-search",
     description=""
