@@ -10,6 +10,7 @@ import os
 import re
 import sys
 
+import dateutil.parser
 import parsedatetime
 import requests
 
@@ -32,35 +33,46 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     'host',
     type=str,
-    help="The name of the host to retrieve the log from"
+    help="Logentries host name"
 )
 parser.add_argument(
     'log',
     type=str,
-    help="The name of the log to retrieve"
+    help="Logentries log name"
 )
 parser.add_argument(
     '-f',
     '--filter',
-    dest='the_filter',
+    dest='filter_string',
     type=str,
     default=None,
-    help="The logentries syntax filter to search by"
+    help="""
+        Logentries filter as per their search syntax. If not specified, all log
+        messages are returned.
+    """
 )
 parser.add_argument(
     '-s',
     '--start',
     type=str,
     default=None,
-    help="The start time for the search, defaults to 20 minutes ago. "
-         "If it is a number, this many minutes will be taken off the end time."
+    help="""
+        The start datetime for the search, defaults to 20 minutes before 'end'.
+        Accepts a flexible range of formats, from ISO datetimes to more human
+        descriptions such as '5 minutes ago'. If given as a floating point
+        number, it will be interpreted as that many minutes before the end
+        datetime.
+    """
 )
 parser.add_argument(
     '-e',
     '--end',
     type=str,
     default=None,
-    help="The end time for the search, defaults to now."
+    help="""
+        The end datetime for the search, defaults to now. Accepts the same
+        flexible range of formats as for 'start'.
+    """
 )
 
 parser.add_argument(
@@ -68,15 +80,18 @@ parser.add_argument(
     '--account-key',
     type=str,
     default=None,
-    help="Your account key (from settings). If not set on the commandline it "
-         "will be set from the environment variable LOGENTRIES_ACCOUNT_KEY"
+    help="""
+        Your account key (from Logentries settings). If not set as an argument
+        the environment variable LOGENTRIES_ACCOUNT_KEY will be checked.
+    """
 )
+
 
 URL_TEMPLATE = 'https://pull.logentries.com/{account_key}/hosts/{host}/{log}/'
 UUID_RE = r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 
 
-def main(account_key, host, log, start, end, the_filter):
+def main(account_key, host, log, start, end, filter_string):
     if account_key is None:
         account_key = os.getenv('LOGENTRIES_ACCOUNT_KEY')
         if account_key is None:
@@ -96,26 +111,7 @@ def main(account_key, host, log, start, end, the_filter):
         log=log,
     )
 
-    params = {}
-    if end is None:
-        end = dt.datetime.utcnow()
-    else:
-        end = parse_human_datetime(end)
-
-    if start is None:
-        start = 20
-
-    try:
-        start = float(start)
-        start = end - dt.timedelta(minutes=start)
-    except ValueError:
-        start = parse_human_datetime(start)
-
-    params['end'] = as_logentries_timestamp(end)
-    params['start'] = as_logentries_timestamp(start)
-
-    if the_filter is not None:
-        params['filter'] = the_filter
+    params = parse_params(start, end, filter_string)
 
     r = requests.get(url, params=params, stream=True)
 
@@ -139,31 +135,63 @@ def main(account_key, host, log, start, end, the_filter):
     return 0
 
 
+def parse_params(start, end, filter_string):
+    params = {}
+
+    if end is None:
+        end = dt.datetime.utcnow()
+    else:
+        try:
+            end = parse_datetime(end)
+        except ValueError:
+            print("Could not parse the end string '{}'".format(start),
+                  file=sys.stderr)
+
+    # Default is 20 minutes before
+    if start is None:
+        start = '20'
+
+    try:
+        # Accept a plain numbers for the start as well to mean N minutes before
+        start = float(start)
+        start = end - dt.timedelta(minutes=start)
+    except ValueError:
+        try:
+            start = parse_datetime(start)
+        except ValueError():
+            print("Could not parse the start string '{}'".format(start),
+                  file=sys.stderr)
+
+    params['end'] = as_logentries_timestamp(end)
+    params['start'] = as_logentries_timestamp(start)
+
+    if filter_string is not None:
+        params['filter'] = filter_string
+
+    return params
+
+
 parse_cal = parsedatetime.Calendar()
 
 
-def parse_human_datetime(a_string):
-    parsed, result = parse_cal.parse(a_string)
+def parse_datetime(a_string):
+    """
+    Combine the logical and fuzzy powers of dateutil and parsedatetime to
+    provide a flexible datetime parser.
+    """
+
+    try:
+        return dateutil.parser.parse(a_string)
+    except ValueError:
+        # 'unknown string format'
+        pass
+
+    parsed, result = parse_cal.parseDT(a_string)
     if result == 0:
         # Not parsed at all
-        raise ArithmeticError()
+        raise ValueError()
 
-    elif result == 1:
-        # is a date
-        date_fields = parsed[:3]
-        return dt.datetime(*date_fields)
-
-    elif result == 2:
-        # is a time
-        h, m, s = parsed[3:6]
-        today = dt.datetime.utcnow()
-        return today.replace(hour=h, minute=m, second=s)
-
-    if result == 3:  # parsedatetime magic for "it's a datetime"
-        datetime_fields = parsed[:6]  # the last two seem bad
-        return dt.datetime(*datetime_fields)
-    else:
-        return None
+    return parsed
 
 
 def as_logentries_timestamp(a_datetime):
