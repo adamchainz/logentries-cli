@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python -u
 # -*- encoding:utf-8 -*-
 from __future__ import print_function, unicode_literals
 
@@ -13,10 +13,6 @@ import sys
 import dateutil.parser
 import parsedatetime
 import requests
-
-# Unbuffer stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-
 
 # Make SSL more secure
 try:
