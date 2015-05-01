@@ -121,12 +121,14 @@ def main(account_key, host, log, start, end, filter_string):
             # If you search an empty time period, the response is a few blank
             # lines, so filter out those lines
             if line:
-                print(line)
+                print(line.decode('utf-8'))
     except IOError as e:
         if e.errno == errno.EPIPE:
             return 3
         else:
             raise
+    except KeyboardInterrupt:
+        return 4
 
     return 0
 
