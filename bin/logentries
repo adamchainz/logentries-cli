@@ -90,7 +90,7 @@ UUID_RE = r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 def main(account_key, host, log, start, end, filter_string):
     if account_key is None:
         account_key = os.getenv('LOGENTRIES_ACCOUNT_KEY')
-        if account_key is None:
+        if not account_key:
             print("Please set --account-key or the environment variable "
                   "LOGENTRIES_ACCOUNT_KEY", file=sys.stderr)
             return 2
