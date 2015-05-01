@@ -1,2 +1,6 @@
 include LICENSE
-include *.rst
+
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+
+recursive-include *.rst conf.py Makefile make.bat
