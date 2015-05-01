@@ -102,7 +102,7 @@ def main(account_key, host, log, start, end, filter_string):
         return 2
 
     url = URL_TEMPLATE.format(
-        account_key=os.environ['LOGENTRIES_ACCOUNT_KEY'],
+        account_key=account_key,
         host=host,
         log=log,
     )
