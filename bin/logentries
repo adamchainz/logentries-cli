@@ -23,7 +23,7 @@ except ImportError:
 
 
 parser = argparse.ArgumentParser(
-    prog="logentries-search",
+    prog="logentries",
     description=""
 )
 parser.add_argument(
