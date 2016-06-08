@@ -47,4 +47,4 @@ fewer messages are downloaded and you can analyze faster.
 A wide variety of date/time formats are supported for specifying the start and
 end of the time period to fetch messages for, thanks to the awesome
 `parsedatetime <https://github.com/bear/parsedatetime>`_ and `dateutil
-<https://dateutil.readthedocs.org/en/latest/>`_.
+<https://dateutil.readthedocs.io/en/latest/>`_.
