@@ -1,6 +1,9 @@
 logentries-cli
 ==============
 
+**Note:** I am no longer using Logentries. If you would like to take over this
+project to maintain it that would be great! Please email me at me@adamj.eu.
+
 Stream your logs from Logentries on the commandline. Provides the ``logentries``
 command which makes it easy to call their
 `Download API <https://logentries.com/doc/api-download/>`_ and pipe it around.
