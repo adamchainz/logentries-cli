@@ -18,7 +18,7 @@ long_description = read('README.rst')
 
 setup(
     name='logentries-cli',
-    version='1.2',
+    version='1.2.1',
     description='Get your logs from Logentries on the comandline',
     author='Adam Johnson',
     author_email='me@adamj.eu',
@@ -35,7 +35,7 @@ setup(
     include_package_data=True,
     platforms='any',
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 7 - Inactive',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',

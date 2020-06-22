@@ -1,8 +1,15 @@
 logentries-cli
 ==============
 
-**Note:** I am no longer using Logentries. If you would like to take over this
-project to maintain it that would be great! Please email me at me@adamj.eu.
+.. image:: https://img.shields.io/pypi/v/loentries-clis.svg
+   :target: https://pypi.org/project/logentries-cli/
+
+----
+
+**Unmaintained:** I'm no longer maintaining this package because I am no longer
+using Logentries. If you want to continue its maintenance please contact me.
+
+----
 
 Stream your logs from Logentries on the commandline. Provides the ``logentries``
 command which makes it easy to call their
